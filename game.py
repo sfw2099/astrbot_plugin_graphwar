@@ -224,7 +224,7 @@ class Game:
 
         angle = p.get("angle", 0)
         phys_mode = self.mode if self.mode != "bot" else MODE_NORMAL
-        trajectory, hit_ids, end_point = simulate_trajectory(
+        trajectory, hit_ids, end_points = simulate_trajectory(
             func, p["px"], p["py"], phys_mode,
             self.terrain, soldiers, player_id, angle,
         )
@@ -232,8 +232,9 @@ class Game:
         self.last_trajectory = trajectory
         self.last_fire_player = player_id
 
-        if end_point:
-            self.terrain.explode(end_point[0], end_point[1])
+        for ep in end_points:
+            if ep:
+                self.terrain.explode(ep[0], ep[1])
 
         killed_names = []
         for hid in hit_ids:
@@ -268,7 +269,7 @@ class Game:
             "trajectory": trajectory,
             "hit_ids": hit_ids,
             "hit_names": killed_names,
-            "end_point": end_point,
+            "end_point": end_points[0] if end_points else None,
             "func_str": func_str,
             "shooter_name": p["name"],
             "kills_this_shot": len(hit_ids),

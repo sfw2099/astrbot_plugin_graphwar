@@ -56,8 +56,7 @@ def simulate_trajectory(func, start_px, start_py, mode, terrain, soldiers, shoot
     bwd_pts.reverse()
     all_pts = bwd_pts + [(start_px, start_py)] + fwd_pts
     all_hits = list(set(bwd_hits + fwd_hits))
-    all_end = fwd_end or bwd_end
-    return all_pts, all_hits, all_end
+    return all_pts, all_hits, (fwd_end, bwd_end)
 
 
 def _trace_direction(func, gx0, gy0, direction, mode, terrain, soldiers, shooter_id, angle_deg):

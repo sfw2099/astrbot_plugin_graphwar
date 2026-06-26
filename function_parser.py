@@ -24,12 +24,13 @@ class FunctionToken:
     VALUE = 19
     CONST_E = 20
     CONST_PI = 21
+    NEG = 22
 
     _NAMES = {
         ADD: "+", SUB: "-", MUL: "*", DIV: "/", POW: "^",
         SQRT: "sqrt", LOG: "log", LN: "ln", ABS: "abs",
         SIN: "sin", COS: "cos", TAN: "tan", EXP: "exp",
-        VAR_X: "x", VAR_Y: "y", VAR_YP: "y'",
+        VAR_X: "x", VAR_Y: "y", VAR_YP: "y'", NEG: "neg",
     }
 
     _PRECEDENCE = {
@@ -40,6 +41,7 @@ class FunctionToken:
         SQRT: _math.sqrt, LOG: _math.log10, LN: _math.log,
         ABS: abs, SIN: _math.sin, COS: _math.cos,
         TAN: _math.tan, EXP: _math.exp,
+        NEG: lambda x: -x,
     }
 
     @classmethod
@@ -48,7 +50,7 @@ class FunctionToken:
 
     @classmethod
     def is_unary_func(cls, t):
-        return t in cls._UNARY_FUNCS
+        return t in cls._UNARY_FUNCS or t == cls.NEG
 
     @classmethod
     def is_variable(cls, t):
@@ -72,6 +74,7 @@ _TOKEN_RE = re.compile(
     r"(?P<num>\d+\.?\d*|\.\d+)"
     r"|(?P<yp>y'')"
     r"|(?P<yp1>y')"
+    r"|(?P<neg>neg)"
     r"|(?P<func>sqrt|log|ln|abs|sin|cos|tan|exp)"
     r"|(?P<const>e|pi)"
     r"|(?P<var>[xy])"
@@ -103,9 +106,6 @@ def tokenize(expr):
 
     expr = expr.replace("exp(", "e^(")
 
-    if expr.startswith("-"):
-        expr = "0" + expr
-
     tokens = []
     pos = 0
     while pos < len(expr):
@@ -120,6 +120,8 @@ def tokenize(expr):
             tokens.append(FunctionToken.VAR_YP)
         elif m.group("yp1"):
             tokens.append(FunctionToken.VAR_YP)
+        elif m.group("neg"):
+            tokens.append(FunctionToken.NEG)
         elif m.group("func"):
             tokens.append(_FUNC_MAP[m.group("func").lower()])
         elif m.group("const"):
@@ -129,13 +131,22 @@ def tokenize(expr):
             tokens.append(FunctionToken.VAR_X if v == "x" else FunctionToken.VAR_Y)
         elif m.group("op"):
             op = m.group("op")
-            op_map = {
-                "+": FunctionToken.ADD, "-": FunctionToken.SUB,
-                "*": FunctionToken.MUL, "/": FunctionToken.DIV,
-                "^": FunctionToken.POW, "(": FunctionToken.LPAREN,
-                ")": FunctionToken.RPAREN,
-            }
-            tokens.append(op_map[op])
+            if op == "-":
+                prev_op = tokens[-1] if tokens else None
+                if prev_op is None or prev_op in (
+                    FunctionToken.LPAREN, FunctionToken.POW,
+                    FunctionToken.MUL, FunctionToken.DIV, FunctionToken.ADD, FunctionToken.SUB,
+                ):
+                    tokens.append(FunctionToken.NEG)
+                else:
+                    tokens.append(FunctionToken.SUB)
+            else:
+                op_map = {
+                    "+": FunctionToken.ADD, "*": FunctionToken.MUL,
+                    "/": FunctionToken.DIV, "^": FunctionToken.POW,
+                    "(": FunctionToken.LPAREN, ")": FunctionToken.RPAREN,
+                }
+                tokens.append(op_map[op])
 
     if not tokens:
         raise ValueError("空表达式")

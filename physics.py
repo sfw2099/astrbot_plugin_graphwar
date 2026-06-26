@@ -67,16 +67,12 @@ def _trace_direction(func, gx0, gy0, direction, mode, terrain, soldiers, shooter
 
     if mode == MODE_NORMAL:
         offset = gy0 - func.evaluate(gx0, 0, 0)
-        with open("/tmp/grw_debug.log", "a") as f:
-            f.write(f"NORMAL dir={direction} gx0={gx0:.4f} gy0={gy0:.4f} eval={func.evaluate(gx0,0,0):.4f} offset={offset:.4f} isnan={math.isnan(offset)}\n")
         if math.isnan(offset) or math.isinf(offset):
             return pts, [], None
 
         dx = STEP_SIZE * direction
         x = gx0 + dx * 0.5
         y = func.evaluate(x, 0, 0) + offset
-        with open("/tmp/grw_debug.log", "a") as f:
-            f.write(f"  start x={x:.4f} y={y:.4f} isnan={math.isnan(y)}\n")
         if math.isnan(y) or math.isinf(y):
             return pts, [], None
 

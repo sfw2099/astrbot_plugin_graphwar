@@ -220,14 +220,11 @@ class Game:
         ]
 
         angle = p.get("angle", 0)
+        phys_mode = self.mode if self.mode != "bot" else MODE_NORMAL
         trajectory, hit_ids, end_point = simulate_trajectory(
-            func, p["px"], p["py"], self.mode,
+            func, p["px"], p["py"], phys_mode,
             self.terrain, soldiers, player_id, angle,
         )
-        # DEBUG: hardcoded test line to verify rendering
-        if len(trajectory) <= 1:
-            px0, py0 = p["px"], p["py"]
-            trajectory = [(px0-200, py0-100), (px0, py0), (px0+200, py0+100)] + list(trajectory)
 
         self.last_trajectory = trajectory
         self.last_fire_player = player_id

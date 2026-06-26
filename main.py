@@ -216,6 +216,8 @@ class GraphWarPlugin(Star):
         if not ok:
             yield event.plain_result(msg)
             return
+        async for r in self._send_image(event, game):
+            yield r
         yield event.plain_result(f"{name} 加入了游戏！生命:{game.max_lives}")
 
     async def _cmd_quit(self, event, gid, rest):

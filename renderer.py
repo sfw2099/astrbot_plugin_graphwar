@@ -2,7 +2,7 @@ import os
 import io
 from PIL import Image, ImageDraw, ImageFont
 from .constants import (
-    PLANE_LENGTH, PLANE_HEIGHT, SOLDIER_RADIUS,
+    PLANE_LENGTH, PLANE_HEIGHT, PLANE_GAME_LENGTH, SOLDIER_RADIUS,
     EXPLOSION_RADIUS, PLAYER_COLORS, MODE_NAMES,
 )
 
@@ -72,17 +72,42 @@ def render_game(terrain, players, current_player_id, trajectory=None,
     cx = play_x + PLANE_LENGTH // 2
     cy = play_y + PLANE_HEIGHT // 2
     if show_coords:
-        draw.line([(cx, play_y), (cx, play_y + PLANE_HEIGHT)], fill=(200, 200, 210), width=1)
-        draw.line([(play_x, cy), (play_x + PLANE_LENGTH, cy)], fill=(200, 200, 210), width=1)
+        # coordinate helper
+        def _gx_to_px(gx): return PLANE_LENGTH * gx / PLANE_GAME_LENGTH + PLANE_LENGTH // 2
+        def _gy_to_py(gy): return -PLANE_LENGTH * gy / PLANE_GAME_LENGTH + PLANE_HEIGHT // 2
+
+        # Grid lines (every 5 units, light gray)
+        for gx in range(-25, 26, 5):
+            px = int(play_x + _gx_to_px(gx))
+            draw.line([(px, play_y), (px, play_y + PLANE_HEIGHT)], fill=(220, 220, 225), width=1)
+        for gy in range(-15, 16, 5):
+            py = int(play_y + _gy_to_py(gy))
+            draw.line([(play_x, py), (play_x + PLANE_LENGTH, py)], fill=(220, 220, 225), width=1)
+
+        # Center axes (slightly darker)
+        draw.line([(cx, play_y), (cx, play_y + PLANE_HEIGHT)], fill=(180, 180, 190), width=1)
+        draw.line([(play_x, cy), (play_x + PLANE_LENGTH, cy)], fill=(180, 180, 190), width=1)
+
+        # Tick marks and labels on X-axis
+        for gx in range(-25, 26, 5):
+            px = int(play_x + _gx_to_px(gx))
+            draw.line([(px, cy - 4), (px, cy + 4)], fill=(150, 150, 160), width=1)
+            label = str(gx)
+            bw = draw.textbbox((0, 0), label, font=font_small)
+            draw.text((px - (bw[2] - bw[0]) // 2, cy + 6), label, fill=(130, 130, 150), font=font_small)
+
+        # Tick marks and labels on Y-axis
+        for gy in range(-15, 16, 5):
+            py = int(play_y + _gy_to_py(gy))
+            draw.line([(cx - 4, py), (cx + 4, py)], fill=(150, 150, 160), width=1)
+            if gy != 0:
+                label = str(gy)
+                bw = draw.textbbox((0, 0), label, font=font_small)
+                draw.text((cx - (bw[2] - bw[0]) - 6, py - (bw[3]-bw[1])//2), label, fill=(130, 130, 150), font=font_small)
 
     font_small = _get_font(14)
     font_med = _get_font(18)
     font_large = _get_font(22)
-
-    if show_coords:
-        for label, lx, ly in [("-25", play_x + 5, cy + 3), ("25", play_x + PLANE_LENGTH - 20, cy + 3),
-                              ("15", cx + 3, play_y + 3), ("-15", cx + 3, play_y + PLANE_HEIGHT - 18)]:
-            draw.text((lx, ly), label, fill=(180, 180, 190), font=font_small)
 
     if trajectory and len(trajectory) > 1:
         traj_color = (255, 60, 60)

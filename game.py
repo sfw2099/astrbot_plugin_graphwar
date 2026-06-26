@@ -224,9 +224,6 @@ class Game:
             func, p["px"], p["py"], self.mode,
             self.terrain, soldiers, player_id, angle,
         )
-        import logging
-        _log = logging.getLogger("astrbot")
-        _log.info(f"[graphwar] trajectory: {len(trajectory)} pts, {len(hit_ids)} hits, end={end_point}")
 
         self.last_trajectory = trajectory
         self.last_fire_player = player_id

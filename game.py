@@ -224,6 +224,10 @@ class Game:
             func, p["px"], p["py"], self.mode,
             self.terrain, soldiers, player_id, angle,
         )
+        # DEBUG: hardcoded test line to verify rendering
+        if len(trajectory) <= 1:
+            px0, py0 = p["px"], p["py"]
+            trajectory = [(px0-200, py0-100), (px0, py0), (px0+200, py0+100)] + list(trajectory)
 
         self.last_trajectory = trajectory
         self.last_fire_player = player_id

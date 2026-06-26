@@ -2,7 +2,8 @@ import random
 import time
 from .constants import (
     DEFAULT_MAX_LIVES, DEFAULT_TURN_TIME, DEFAULT_TERRAIN_REFRESH_TURNS,
-    MODE_NORMAL, PLAYER_COLORS, SOLDIER_RADIUS,
+    MODE_NORMAL, MODE_BOT, DEFAULT_BOT_COUNT,
+    PLAYER_COLORS, BOT_COLORS, SOLDIER_RADIUS,
 )
 from .terrain import Terrain
 from .function_parser import CompiledFunction
@@ -13,13 +14,15 @@ class Game:
     def __init__(self, group_id, max_lives=DEFAULT_MAX_LIVES,
                  turn_time=DEFAULT_TURN_TIME,
                  terrain_refresh_turns=DEFAULT_TERRAIN_REFRESH_TURNS,
-                 mode=MODE_NORMAL, stats_manager=None):
+                 mode=MODE_NORMAL, stats_manager=None,
+                 bot_count=DEFAULT_BOT_COUNT):
         self.group_id = group_id
         self.max_lives = max_lives
         self.turn_time = turn_time
         self.terrain_refresh_turns = terrain_refresh_turns
         self.mode = mode
         self.stats = stats_manager
+        self.bot_count = bot_count
 
         self.terrain = Terrain()
         self.terrain.generate()
@@ -35,11 +38,57 @@ class Game:
         self.running = False
         self.started_by = None
         self._color_idx = 0
+        self._bot_idx = 0
+        self.bots_enabled = False
 
     def _next_color(self):
         c = PLAYER_COLORS[self._color_idx % len(PLAYER_COLORS)]
         self._color_idx += 1
         return c
+
+    def _next_bot_color(self):
+        return BOT_COLORS[self._bot_idx % len(BOT_COLORS)]
+
+    def _spawn_bot(self):
+        spawns = [(p["px"], p["py"]) for p in self.players.values() if p.get("alive", False)]
+        pos = self.terrain.find_random_spawn(spawns)
+        if pos is None:
+            return None
+        bid = f"bot_{self._bot_idx}"
+        self._bot_idx += 1
+        self.players[bid] = {
+            "id": bid, "name": f"AI-{self._bot_idx}",
+            "px": pos[0], "py": pos[1],
+            "alive": True, "lives": 1,
+            "kills": 0, "color": self._next_bot_color(),
+            "angle": 0, "total_kills_this_life": 0,
+            "is_bot": True,
+        }
+        return bid
+
+    def enable_bots(self, count=None):
+        if count is not None:
+            self.bot_count = count
+        self.bots_enabled = True
+        current_bots = [pid for pid, p in self.players.items() if p.get("is_bot")]
+        needed = max(0, self.bot_count - len(current_bots))
+        for _ in range(needed):
+            self._spawn_bot()
+
+    def disable_bots(self):
+        self.bots_enabled = False
+        for pid in list(self.players.keys()):
+            if self.players[pid].get("is_bot"):
+                self.remove_player(pid)
+
+    def _maintain_bots(self):
+        if not self.bots_enabled or self.mode != MODE_BOT:
+            return
+        current_bots = [pid for pid, p in self.players.items()
+                        if p.get("is_bot") and p.get("alive", False)]
+        needed = max(0, self.bot_count - len(current_bots))
+        for _ in range(needed):
+            self._spawn_bot()
 
     def start(self, starter_id, starter_name):
         self.running = True
@@ -100,6 +149,7 @@ class Game:
 
     def stop(self):
         self.running = False
+        self.disable_bots()
         self.players.clear()
         self.turn_order.clear()
         self.current_turn_idx = 0
@@ -111,7 +161,8 @@ class Game:
         return self.players.get(pid)
 
     def _rebuild_turn_order(self):
-        self.turn_order = [pid for pid, p in self.players.items() if p.get("alive", False)]
+        self.turn_order = [pid for pid, p in self.players.items()
+                           if p.get("alive", False) and not p.get("is_bot")]
         if self.current_turn_idx >= len(self.turn_order):
             self.current_turn_idx = 0
 
@@ -205,6 +256,8 @@ class Game:
                 if self.stats:
                     self.stats.record_kill(player_id, p["name"], p["total_kills_this_life"])
 
+        self._maintain_bots()
+
         result = {
             "trajectory": trajectory,
             "hit_ids": hit_ids,
@@ -250,7 +303,11 @@ class Game:
         return sum(1 for p in self.players.values() if p.get("alive", False))
 
     def set_mode(self, mode):
-        if mode in ("normal", "ode1", "ode2"):
-            self.mode = mode
-            return True
-        return False
+        if mode not in ("normal", "ode1", "ode2", "bot"):
+            return False
+        if mode == MODE_BOT and self.mode != MODE_BOT:
+            self.enable_bots()
+        elif mode != MODE_BOT and self.mode == MODE_BOT:
+            self.disable_bots()
+        self.mode = mode
+        return True

@@ -22,11 +22,13 @@ DEFAULT_TERRAIN_REFRESH_TURNS = 10
 MODE_NORMAL = "normal"
 MODE_ODE1 = "ode1"
 MODE_ODE2 = "ode2"
+MODE_BOT = "bot"
 
 MODE_NAMES = {
     MODE_NORMAL: "普通函数 y=f(x)",
     MODE_ODE1: "一阶微分方程 y'=f(x,y)",
     MODE_ODE2: "二阶微分方程 y''=f(x,y,y')",
+    MODE_BOT: "人机对战（AI球自动刷新）",
 }
 
 PLAYER_COLORS = [
@@ -41,3 +43,13 @@ PLAYER_COLORS = [
     (160, 200, 60),
     (120, 160, 255),
 ]
+
+BOT_COLORS = [
+    (150, 150, 150),
+    (130, 130, 140),
+    (110, 110, 130),
+    (140, 140, 150),
+    (120, 120, 140),
+]
+
+DEFAULT_BOT_COUNT = 3

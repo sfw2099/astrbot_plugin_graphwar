@@ -40,9 +40,21 @@
         "options": [
             "normal",
             "ode1",
-            "ode2"
+            "ode2",
+            "bot"
         ],
         "default": "normal"
+    },
+    "bot_count": {
+        "type": "int",
+        "title": "人机数量",
+        "description": "bot 模式下的 AI 球数量（击落自动刷新）",
+        "default": 3,
+        "slider": {
+            "min": 1,
+            "max": 10,
+            "step": 1
+        }
     },
     "image_width": {
         "type": "int",

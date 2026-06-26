@@ -83,7 +83,17 @@ class GraphWarPlugin(Star):
                 if game.is_turn_expired():
                     cp = game.current_player()
                     if cp:
-                        await self._send_group_msg(group_id, f"超时！{cp['name']} 被跳过")
+                        path = self._render_to_file(game)
+                        try:
+                            from astrbot.api.message_components import Image as Img, Plain as P
+                            from astrbot.api.event import MessageChain as MC
+                            umo = f"aiocqhttp:{group_id}"
+                            await self.context.send_message(umo, MC([
+                                P(f"超时！{cp['name']} 被跳过"),
+                                Img.fromFileSystem(path),
+                            ]))
+                        except Exception as e:
+                            logger.warning(f"[graphwar] timeout notify: {e}")
                     game.advance_turn()
                     await self._notify_turn(group_id)
                 elif game.turn_time_remaining() == 30:
@@ -111,8 +121,8 @@ class GraphWarPlugin(Star):
             return
         path = self._render_to_file(game)
         try:
+            from astrbot.api.message_components import Image as Img, Plain as P
             from astrbot.api.event import MessageChain as MC
-            from astrbot.api.message_components import Plain as P, Image as Img
             umo = f"aiocqhttp:{group_id}"
             msg = (f"轮到: {cp['name']} | 生命:{cp['lives']} 击杀:{cp['kills']}\n"
                    f"输入 /gw fire <函数> | 剩余:{game.turn_time_remaining()}秒")

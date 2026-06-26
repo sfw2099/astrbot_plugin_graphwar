@@ -172,16 +172,6 @@ class Game:
 
     def advance_turn(self):
         self.turn_count += 1
-        if self.turn_count % self.terrain_refresh_turns == 0:
-            self.terrain.generate()
-            for p in self.players.values():
-                if p.get("alive", False):
-                    spawns = [(pp["px"], pp["py"]) for pp in self.players.values()
-                              if pp.get("alive", False) and pp["id"] != p["id"]]
-                    pos = self.terrain.find_random_spawn(spawns)
-                    if pos:
-                        p["px"], p["py"] = pos
-
         self._rebuild_turn_order()
         if self.turn_order:
             self.current_turn_idx = (self.current_turn_idx + 1) % len(self.turn_order)
@@ -190,6 +180,16 @@ class Game:
         self.turn_start_time = time.time()
         self.last_trajectory = None
         self.last_func_str = None
+
+    def refresh_terrain(self):
+        self.terrain.generate()
+        for p in self.players.values():
+            if p.get("alive", False):
+                spawns = [(pp["px"], pp["py"]) for pp in self.players.values()
+                          if pp.get("alive", False) and pp["id"] != p["id"]]
+                pos = self.terrain.find_random_spawn(spawns)
+                if pos:
+                    p["px"], p["py"] = pos
 
     def turn_time_remaining(self):
         elapsed = time.time() - self.turn_start_time

@@ -240,6 +240,13 @@ class GraphWarPlugin(Star):
         hit_text = f" 命中: {', '.join(hits)}" if hits else " 未命中！"
         async for r in self._send_image(event, game, f"{result['shooter_name']} fired: {result['func_str']}{hit_text}"):
             yield r
+
+        will_refresh = (game.turn_count + 1) % game.terrain_refresh_turns == 0
+        if will_refresh:
+            game.refresh_terrain()
+            async for r in self._send_image(event, game, "地形已刷新！"):
+                yield r
+
         game.advance_turn()
         await self._notify_turn(gid)
 

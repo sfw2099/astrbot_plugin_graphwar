@@ -90,10 +90,6 @@ def render_game(terrain, players, current_player_id, trajectory=None,
                 fill=traj_color, width=5,
             )
 
-    # Debug: show trajectory point count on image
-    traj_count = len(trajectory) if trajectory else 0
-    draw.text((margin, 52), f"traj:{traj_count}pts mode:{mode}", fill=(255, 80, 80), font=font_small)
-
     for p in players:
         if not p.get("alive", False) and not p.get("spectating", False):
             continue

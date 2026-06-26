@@ -44,149 +44,115 @@ def _rk4_system_step(f1, f2, x, y, yp, h):
 
 def simulate_trajectory(func, start_px, start_py, mode, terrain, soldiers, shooter_id, angle_deg=0):
     """Simulate a function shot and return (trajectory_points, hit_soldiers, end_point).
-    Traces in both forward and backward directions from the starting point.
-
-    Args:
-        func: CompiledFunction
-        start_px, start_py: shooter soldier pixel position
-        mode: MODE_NORMAL / MODE_ODE1 / MODE_ODE2
-        terrain: Terrain object with collide_point(px, py)
-        soldiers: list of dicts: {id, px, py, alive, color}
-        shooter_id: id of the shooting soldier (skip self)
-        angle_deg: firing angle (only used in ODE2 mode)
-
-    Returns:
-        (points: list of (px,py), hits: list of soldier_ids, end: (px,py) or None)
-    """
+    Traces in both forward and backward directions from the starting point."""
     gx0, gy0 = plane_to_game(start_px, start_py)
 
-    def _trace(direction):
-        """Trace in one direction. direction=1 for forward, -1 for backward."""
-        hit_set = set()
-        pts = []
-        end_pt = None
+    def _trace_one(direction):
+        return _trace_direction(func, gx0, gy0, direction, mode, terrain, soldiers, shooter_id, angle_deg)
 
-        if mode == MODE_NORMAL:
-            offset = gy0 - func.evaluate(gx0, 0, 0)
-            if math.isnan(offset) or math.isinf(offset):
-                return pts, [], None
+    fwd_pts, fwd_hits, fwd_end = _trace_one(1)
+    bwd_pts, bwd_hits, bwd_end = _trace_one(-1)
 
-            def get_y(x):
-                v = func.evaluate(x, 0, 0)
-                if math.isnan(v) or math.isinf(v):
-                    return float("nan")
-                return v + offset
-
-            dx = STEP_SIZE * direction
-            x = gx0 + dx * 0.5
-            y = get_y(x)
-
-        elif mode == MODE_ODE1:
-            def deriv(x, y):
-                v = func.evaluate(x, y, 0)
-                if math.isnan(v) or math.isinf(v):
-                    return 0.0
-                return v
-
-            x = gx0
-            y = gy0
-            dx = STEP_SIZE * direction
-
-        elif mode == MODE_ODE2:
-            angle_rad = math.radians(angle_deg)
-            if direction == 1:
-                yp0 = math.tan(angle_rad)
-            else:
-                yp0 = -math.tan(angle_rad)
-
-            def f_y(x, y, yp):
-                return yp
-
-            def f_yp(x, y, yp):
-                v = func.evaluate(x, y, yp)
-                if math.isnan(v) or math.isinf(v):
-                    return 0.0
-                return v
-
-            x = gx0
-            y = gy0
-            yp = yp0
-            dx = STEP_SIZE * direction
-        else:
-            return pts, [], None
-
-        step_count = 0
-        while step_count < FUNC_MAX_STEPS:
-            step_count += 1
-
-            if mode == MODE_NORMAL:
-                nx = x + dx
-                ny = get_y(nx)
-                if math.isnan(ny) or math.isinf(ny):
-                    break
-            elif mode == MODE_ODE1:
-                nx = x + dx
-                ny = _rk4_step(deriv, x, y, dx)
-            elif mode == MODE_ODE2:
-                nx = x + dx
-                ny, nyp = _rk4_system_step(f_y, f_yp, x, y, yp, dx)
-                yp = nyp
-
-            if math.isnan(ny) or math.isinf(ny):
-                break
-
-            dy_sq = (ny - y) ** 2
-            if dy_sq > FUNC_MAX_STEP_DISTANCE_SQUARED and abs(nx - x) < FUNC_MIN_X_STEP_DISTANCE:
-                dx *= 0.5
-                if abs(dx) < FUNC_MIN_X_STEP_DISTANCE:
-                    break
-                continue
-
-            x = nx
-            y = ny
-
-            if abs(x) > PLANE_GAME_LENGTH / 2 + 5:
-                break
-            if abs(y) > PLANE_GAME_LENGTH * 0.7:
-                break
-
-            px, py = game_to_plane(x, y)
-
-            if px < 0 or px >= PLANE_LENGTH or py < 0 or py >= PLANE_HEIGHT:
-                break
-
-            if terrain.collide_point(int(px), int(py)):
-                pts.append((px, py))
-                end_pt = (px, py)
-                break
-
-            for s in soldiers:
-                if not s.get("alive", False):
-                    continue
-                if s["id"] == shooter_id:
-                    continue
-                sdx = px - s["px"]
-                sdy = py - s["py"]
-                if sdx * sdx + sdy * sdy < SOLDIER_RADIUS * SOLDIER_RADIUS:
-                    if s["id"] not in hit_set:
-                        hit_set.add(s["id"])
-
-            pts.append((px, py))
-            end_pt = (px, py)
-
-        return pts, list(hit_set), end_pt
-
-    # Trace both directions
-    fwd_pts, fwd_hits, fwd_end = _trace(1)
-    bwd_pts, bwd_hits, bwd_end = _trace(-1)
-
-    # Combine: backward reversed (without start dup) + start + forward
     bwd_pts.reverse()
     all_pts = bwd_pts + [(start_px, start_py)] + fwd_pts
     all_hits = list(set(bwd_hits + fwd_hits))
     all_end = fwd_end or bwd_end
-
     return all_pts, all_hits, all_end
+
+
+def _trace_direction(func, gx0, gy0, direction, mode, terrain, soldiers, shooter_id, angle_deg):
+    hit_set = set()
+    pts = []
+    end_pt = None
+
+    if mode == MODE_NORMAL:
+        offset = gy0 - func.evaluate(gx0, 0, 0)
+        if math.isnan(offset) or math.isinf(offset):
+            return pts, [], None
+
+        dx = STEP_SIZE * direction
+        x = gx0 + dx * 0.5
+        y = func.evaluate(x, 0, 0) + offset
+        if math.isnan(y) or math.isinf(y):
+            return pts, [], None
+
+    elif mode == MODE_ODE1:
+        x = gx0
+        y = gy0
+        dx = STEP_SIZE * direction
+
+    elif mode == MODE_ODE2:
+        angle_rad = math.radians(angle_deg)
+        yp0 = math.tan(angle_rad) if direction == 1 else -math.tan(angle_rad)
+        x = gx0
+        y = gy0
+        yp = yp0
+        dx = STEP_SIZE * direction
+    else:
+        return pts, [], None
+
+    step_count = 0
+    while step_count < FUNC_MAX_STEPS:
+        step_count += 1
+
+        if mode == MODE_NORMAL:
+            nx = x + dx
+            ny = func.evaluate(nx, 0, 0) + offset
+            if math.isnan(ny) or math.isinf(ny):
+                break
+        elif mode == MODE_ODE1:
+            nx = x + dx
+            ny = _rk4_step(lambda x_, y_: func.evaluate(x_, y_, 0), x, y, dx)
+        elif mode == MODE_ODE2:
+            nx = x + dx
+            ny, nyp = _rk4_system_step(
+                lambda x_, y_, yp_: yp_,
+                lambda x_, y_, yp_: func.evaluate(x_, y_, yp_),
+                x, y, yp, dx)
+            yp = nyp
+
+        if math.isnan(ny) or math.isinf(ny):
+            break
+
+        dy_sq = (ny - y) ** 2
+        if dy_sq > FUNC_MAX_STEP_DISTANCE_SQUARED and abs(nx - x) < FUNC_MIN_X_STEP_DISTANCE:
+            dx *= 0.5
+            if abs(dx) < FUNC_MIN_X_STEP_DISTANCE:
+                break
+            continue
+
+        x = nx
+        y = ny
+
+        if abs(x) > PLANE_GAME_LENGTH / 2 + 5:
+            break
+        if abs(y) > PLANE_GAME_LENGTH * 0.7:
+            break
+
+        px, py = game_to_plane(x, y)
+
+        if px < 0 or px >= PLANE_LENGTH or py < 0 or py >= PLANE_HEIGHT:
+            break
+
+        if terrain.collide_point(int(px), int(py)):
+            pts.append((px, py))
+            end_pt = (px, py)
+            break
+
+        for s in soldiers:
+            if not s.get("alive", False):
+                continue
+            if s["id"] == shooter_id:
+                continue
+            sdx, sdy = px - s["px"], py - s["py"]
+            if sdx * sdx + sdy * sdy < SOLDIER_RADIUS * SOLDIER_RADIUS:
+                if s["id"] not in hit_set:
+                    hit_set.add(s["id"])
+
+        pts.append((px, py))
+        end_pt = (px, py)
+
+    return pts, list(hit_set), end_pt
 
 
 def compute_start_angle(func, start_px, start_py, mode):

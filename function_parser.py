@@ -150,6 +150,28 @@ def tokenize(expr):
 
     if not tokens:
         raise ValueError("空表达式")
+
+    # Fix: wrap e^... after NEG: -e^(x+2) → -(e^(x+2))
+    for i in range(len(tokens) - 2):
+        if (tokens[i] == FunctionToken.NEG and tokens[i+1] == FunctionToken.CONST_E
+                and i + 2 < len(tokens) and tokens[i+2] == FunctionToken.POW):
+            j = i + 3
+            depth = 0
+            while j < len(tokens):
+                if tokens[j] == FunctionToken.LPAREN:
+                    depth += 1
+                elif tokens[j] == FunctionToken.RPAREN:
+                    if depth == 0:
+                        j += 1
+                        break
+                    depth -= 1
+                elif depth == 0 and FunctionToken.is_operator(tokens[j]):
+                    break
+                j += 1
+            tokens.insert(j, FunctionToken.RPAREN)
+            tokens.insert(i + 1, FunctionToken.LPAREN)
+            break
+
     return tokens
 
 
@@ -252,7 +274,7 @@ def _evaluate(prefix_tokens, x, y, yp):
             if t == FunctionToken.POW:
                 try:
                     return a ** b
-                except (ValueError, OverflowError):
+                except (ValueError, OverflowError, TypeError):
                     return float("nan")
 
         if FunctionToken.is_unary_func(t):

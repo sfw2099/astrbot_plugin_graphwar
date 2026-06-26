@@ -130,9 +130,12 @@ class Game:
         if player_id not in self.turn_order:
             self.turn_order.append(player_id)
 
-        if self.stats:
+        if self._stat_mode():
             self.stats.record_game_join(player_id, player_name)
         return True, None
+
+    def _stat_mode(self):
+        return self.mode != "bot" and self.stats
 
     def remove_player(self, player_id):
         if player_id in self.players:
@@ -240,7 +243,7 @@ class Game:
                 if victim["lives"] <= 0:
                     victim["alive"] = False
                     killed_names.append(victim["name"])
-                    if self.stats:
+                    if self._stat_mode():
                         self.stats.record_death(hid, victim["name"])
                     if hid in self.turn_order:
                         self.turn_order.remove(hid)
@@ -256,7 +259,7 @@ class Game:
 
                 p["kills"] += 1
                 p["total_kills_this_life"] += 1
-                if self.stats:
+                if self._stat_mode():
                     self.stats.record_kill(player_id, p["name"], p["total_kills_this_life"])
 
         self._maintain_bots()

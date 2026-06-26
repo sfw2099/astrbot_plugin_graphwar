@@ -35,6 +35,7 @@ class GraphWarPlugin(Star):
         self.terrain_refresh = cfg.get("terrain_refresh_turns", 10)
         self.default_mode = cfg.get("default_mode", MODE_NORMAL)
         self.bot_count = cfg.get("bot_count", DEFAULT_BOT_COUNT)
+        self.explosion_radius = cfg.get("explosion_radius", 18)
         logger.info(f"[graphwar] plugin loaded, data_dir={self.data_dir}")
 
     def _get_game(self, group_id):
@@ -46,7 +47,7 @@ class GraphWarPlugin(Star):
                 group_id=group_id, max_lives=self.max_lives,
                 turn_time=self.turn_time, terrain_refresh_turns=self.terrain_refresh,
                 mode=self.default_mode, stats_manager=self.stats,
-                bot_count=self.bot_count,
+                bot_count=self.bot_count, explosion_radius=self.explosion_radius,
             )
         return self.games[group_id]
 

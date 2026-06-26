@@ -15,7 +15,7 @@ class Game:
                  turn_time=DEFAULT_TURN_TIME,
                  terrain_refresh_turns=DEFAULT_TERRAIN_REFRESH_TURNS,
                  mode=MODE_NORMAL, stats_manager=None,
-                 bot_count=DEFAULT_BOT_COUNT):
+                 bot_count=DEFAULT_BOT_COUNT, explosion_radius=18):
         self.group_id = group_id
         self.max_lives = max_lives
         self.turn_time = turn_time
@@ -23,6 +23,7 @@ class Game:
         self.mode = mode
         self.stats = stats_manager
         self.bot_count = bot_count
+        self.explosion_radius = explosion_radius
 
         self.terrain = Terrain()
         self.terrain.generate()
@@ -234,7 +235,7 @@ class Game:
 
         for ep in end_points:
             if ep:
-                self.terrain.explode(ep[0], ep[1])
+                self.terrain.explode(ep[0], ep[1], self.explosion_radius)
 
         killed_names = []
         for hid in hit_ids:

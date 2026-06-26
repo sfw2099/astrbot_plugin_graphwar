@@ -55,6 +55,17 @@
             "step": 1
         }
     },
+    "explosion_radius": {
+        "type": "int",
+        "title": "爆炸范围半径",
+        "description": "炮弹击中障碍物时的破坏半径（像素）",
+        "default": 18,
+        "slider": {
+            "min": 10,
+            "max": 40,
+            "step": 2
+        }
+    },
     "image_width": {
         "type": "int",
         "title": "渲染图片宽度",

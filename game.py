@@ -186,6 +186,7 @@ class Game:
             self.current_turn_idx = 0
         self.turn_start_time = time.time()
         self.last_trajectory = None
+        self.last_func_str = None
 
     def turn_time_remaining(self):
         elapsed = time.time() - self.turn_start_time

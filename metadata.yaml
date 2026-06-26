@@ -1,0 +1,6 @@
+name: astrbot_plugin_graphwar
+display_name: 函数战争
+desc: 数学函数炮弹对战 - 输入函数控制弹道轨迹击杀对手
+version: v0.1.0
+author: ALin
+repo: https://github.com/sfw2099/astrbot_plugin_graphwar

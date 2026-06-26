@@ -1,0 +1,69 @@
+{
+    "turn_time": {
+        "type": "int",
+        "title": "回合限时(秒)",
+        "description": "每回合玩家输入函数的时间限制",
+        "hint": "超时自动跳过回合",
+        "default": 120,
+        "slider": {
+            "min": 30,
+            "max": 300,
+            "step": 10
+        }
+    },
+    "max_lives": {
+        "type": "int",
+        "title": "每人生命次数",
+        "description": "被击中后随机刷新的次数，用完自动离开",
+        "default": 3,
+        "slider": {
+            "min": 1,
+            "max": 10,
+            "step": 1
+        }
+    },
+    "terrain_refresh_turns": {
+        "type": "int",
+        "title": "地形刷新回合数",
+        "description": "每过多少回合重新生成地形",
+        "default": 10,
+        "slider": {
+            "min": 3,
+            "max": 30,
+            "step": 1
+        }
+    },
+    "default_mode": {
+        "type": "string",
+        "title": "默认游戏模式",
+        "description": "游戏开始时的默认函数模式",
+        "options": [
+            "normal",
+            "ode1",
+            "ode2"
+        ],
+        "default": "normal"
+    },
+    "image_width": {
+        "type": "int",
+        "title": "渲染图片宽度",
+        "description": "生成的游戏图片宽度(像素)",
+        "default": 770,
+        "slider": {
+            "min": 400,
+            "max": 1080,
+            "step": 10
+        }
+    },
+    "image_height": {
+        "type": "int",
+        "title": "渲染图片高度",
+        "description": "生成的游戏图片高度(像素)",
+        "default": 450,
+        "slider": {
+            "min": 240,
+            "max": 800,
+            "step": 10
+        }
+    }
+}

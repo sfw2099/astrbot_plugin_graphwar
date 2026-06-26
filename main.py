@@ -76,13 +76,13 @@ class GraphWarPlugin(Star):
                 if game.is_turn_expired():
                     cp = game.current_player()
                     if cp:
-                        await self._send_group_msg(group_id, f"timeout! {cp['name']} skipped")
+                        await self._send_group_msg(group_id, f"超时！{cp['name']} 被跳过")
                     game.advance_turn()
                     await self._notify_turn(group_id)
                 elif game.turn_time_remaining() == 30:
                     cp = game.current_player()
                     if cp:
-                        await self._send_group_msg(group_id, f"warning: {cp['name']} 30s left")
+                        await self._send_group_msg(group_id, f"警告：{cp['name']} 还剩 30 秒")
 
         self._timeout_tasks[group_id] = asyncio.create_task(_monitor())
 
@@ -107,8 +107,8 @@ class GraphWarPlugin(Star):
             from astrbot.api.event import MessageChain as MC
             from astrbot.api.message_components import Plain as P, Image as Img
             umo = f"aiocqhttp:{group_id}"
-            msg = (f"turn: {cp['name']} | lives:{cp['lives']} kills:{cp['kills']}\n"
-                   f"use /gw fire <func> | time:{game.turn_time_remaining()}s")
+            msg = (f"轮到: {cp['name']} | 生命:{cp['lives']} 击杀:{cp['kills']}\n"
+                   f"输入 /gw fire <函数> | 剩余:{game.turn_time_remaining()}秒")
             await self.context.send_message(umo, MC([Img.fromFileSystem(path), P(msg)]))
         except Exception as e:
             logger.warning(f"[graphwar] notify: {e}")
@@ -127,7 +127,7 @@ class GraphWarPlugin(Star):
         rest = parts[2] if len(parts) > 2 else ""
         gid = str(event.get_group_id()) if event.get_group_id() else ""
         if not gid:
-            yield event.plain_result("only in group chat")
+            yield event.plain_result("此功能仅在群聊中可用")
             return
         handlers = {
             "start": self._cmd_start, "stop": self._cmd_stop,
@@ -142,12 +142,12 @@ class GraphWarPlugin(Star):
             async for r in h(event, gid, rest):
                 yield r
         else:
-            yield event.plain_result(f"unknown: {sub}, try /gw help")
+            yield event.plain_result(f"未知指令: {sub}，输入 /gw help 查看帮助")
 
     async def _cmd_start(self, event, gid, rest):
         game = self._get_game(gid)
         if game and game.running:
-            yield event.plain_result("game running! /gw join")
+            yield event.plain_result("游戏进行中！输入 /gw join 加入")
             return
         game = self._get_or_create_game(gid)
         uid = str(event.get_sender_id())
@@ -157,29 +157,29 @@ class GraphWarPlugin(Star):
         async for r in self._send_image(event, game):
             yield r
         yield event.plain_result(
-            f"Game started! mode:{MODE_NAMES.get(game.mode)} lives:{game.max_lives}\n"
-            f"/gw join | /gw fire <func>"
+            f"游戏开始！模式:{MODE_NAMES.get(game.mode)} 生命:{game.max_lives}\n"
+            f"/gw join 加入 | /gw fire <函数> 发射"
         )
 
     async def _cmd_stop(self, event, gid, rest):
         game = self._get_game(gid)
         if not game or not game.running:
-            yield event.plain_result("no game running")
+            yield event.plain_result("当前没有游戏进行")
             return
         uid = str(event.get_sender_id())
         if uid != game.started_by:
-            yield event.plain_result("only starter can stop")
+            yield event.plain_result("只有发起者可以结束游戏")
             return
         game.stop()
         if gid in self._timeout_tasks:
             self._timeout_tasks[gid].cancel()
             del self._timeout_tasks[gid]
-        yield event.plain_result("game stopped!")
+        yield event.plain_result("游戏已结束！")
 
     async def _cmd_join(self, event, gid, rest):
         game = self._get_game(gid)
         if not game or not game.running:
-            yield event.plain_result("no game, /gw start first")
+            yield event.plain_result("当前没有游戏，输入 /gw start 开始")
             return
         uid = str(event.get_sender_id())
         name = event.get_sender_name() or f"user({uid})"
@@ -187,7 +187,7 @@ class GraphWarPlugin(Star):
         if not ok:
             yield event.plain_result(msg)
             return
-        yield event.plain_result(f"{name} joined! lives:{game.max_lives}")
+        yield event.plain_result(f"{name} 加入了游戏！生命:{game.max_lives}")
 
     async def _cmd_quit(self, event, gid, rest):
         game = self._get_game(gid)
@@ -196,15 +196,15 @@ class GraphWarPlugin(Star):
             return
         uid = str(event.get_sender_id())
         ok, msg = game.quit(uid)
-        yield event.plain_result(msg if msg else "left game")
+        yield event.plain_result(f"{msg}，已退出游戏" if msg else "已退出游戏")
 
     async def _cmd_fire(self, event, gid, rest):
         game = self._get_game(gid)
         if not game or not game.running:
-            yield event.plain_result("no game running")
+            yield event.plain_result("当前没有游戏进行")
             return
         if not rest.strip():
-            yield event.plain_result("usage: /gw fire <function>")
+            yield event.plain_result("用法: /gw fire <函数>")
             return
         uid = str(event.get_sender_id())
         result, err = game.fire(uid, rest.strip())
@@ -212,7 +212,7 @@ class GraphWarPlugin(Star):
             yield event.plain_result(err)
             return
         hits = result.get("hit_names", [])
-        hit_text = f" hits: {', '.join(hits)}" if hits else " missed!"
+        hit_text = f" 命中: {', '.join(hits)}" if hits else " 未命中！"
         async for r in self._send_image(event, game, f"{result['shooter_name']} fired: {result['func_str']}{hit_text}"):
             yield r
         game.advance_turn()
@@ -221,7 +221,7 @@ class GraphWarPlugin(Star):
     async def _cmd_status(self, event, gid, rest):
         game = self._get_game(gid)
         if not game or not game.running:
-            yield event.plain_result("no game running")
+            yield event.plain_result("当前没有游戏进行")
             return
         async for r in self._send_image(event, game):
             yield r
@@ -229,60 +229,63 @@ class GraphWarPlugin(Star):
     async def _cmd_stats(self, event, gid, rest):
         lb = self.stats.get_leaderboard(10)
         if not lb:
-            yield event.plain_result("no stats yet")
+            yield event.plain_result("暂无统计数据")
             return
-        lines = ["=== Kill Streak Leaderboard ==="]
+        lines = ["=== 击杀排行榜 ==="]
         for i, p in enumerate(lb, 1):
-            lines.append(f"{i}. {p.get('name','?')} | max:{p.get('max_kill_streak',0)} | total:{p.get('total_kills',0)}")
+            lines.append(f"{i}. {p.get('name','?')} | 最高连杀:{p.get('max_kill_streak',0)} | 总击杀:{p.get('total_kills',0)}")
         uid = str(event.get_sender_id())
         ps = self.stats.get_player_stats(uid)
-        lines.append(f"\nYour best: {ps.get('max_kill_streak',0)} kills | total:{ps.get('total_kills',0)}")
+        lines.append(f"\n个人最佳: 连杀 {ps.get('max_kill_streak',0)} | 总击杀 {ps.get('total_kills',0)}")
         yield event.plain_result("\n".join(lines))
 
     async def _cmd_mode(self, event, gid, rest):
         game = self._get_game(gid)
         if not game or not game.running:
-            yield event.plain_result("no game running")
+            yield event.plain_result("当前没有游戏进行")
             return
         mode = rest.strip().lower()
         if mode not in ("normal", "ode1", "ode2"):
-            yield event.plain_result(f"current: {game.mode} | options: normal, ode1, ode2")
+            yield event.plain_result(f"当前模式: {game.mode} | 可选: normal, ode1, ode2")
             return
         game.set_mode(mode)
-        yield event.plain_result(f"mode set to: {MODE_NAMES.get(mode)}")
+        yield event.plain_result(f"模式已切换: {MODE_NAMES.get(mode)}")
 
     async def _cmd_angle(self, event, gid, rest):
         game = self._get_game(gid)
         if not game or not game.running:
-            yield event.plain_result("no game running")
+            yield event.plain_result("当前没有游戏进行")
             return
         try:
             angle = int(rest.strip())
         except ValueError:
-            yield event.plain_result("usage: /gw angle <degrees>")
+            yield event.plain_result("用法: /gw angle <角度>")
             return
         uid = str(event.get_sender_id())
         game.set_angle(uid, angle)
-        yield event.plain_result(f"angle set to {angle} degrees")
+        yield event.plain_result(f"角度已设为 {angle} 度")
 
     async def _show_help(self, event, gid="", rest=""):
         help_text = (
-            "=== Graphwar Help ===\n"
-            "/gw start - start game (auto join)\n"
-            "/gw stop - stop game (starter only)\n"
-            "/gw join - join game\n"
-            "/gw quit - leave game\n"
-            "/gw fire <func> - fire function\n"
-            "/gw status - show board\n"
-            "/gw stats - kill leaderboard\n"
-            "/gw mode <normal|ode1|ode2> - set mode\n"
-            "/gw angle <deg> - set firing angle (ode2)\n"
-            "\nFunction examples:\n"
-            "  normal: sin(x)*5 or y=sin(x)*5\n"
-            "  ode1: y'=-y/3\n"
-            "  ode2: y''=-y+y' (set angle first)\n"
-            "\nOperators: + - * / ^\n"
-            "Functions: sqrt log ln abs sin cos tan exp\n"
+            "=== 函数战争 帮助 ===\n"
+            "/gw start — 开始游戏（自动加入）\n"
+            "/gw stop — 结束游戏（仅发起者）\n"
+            "/gw join — 加入游戏\n"
+            "/gw quit — 退出游戏\n"
+            "/gw fire <函数> — 发射炮弹（写函数表达式）\n"
+            "/gw status / /gw s — 查看当前棋盘\n"
+            "/gw stats — 击杀排行榜\n"
+            "/gw mode <normal|ode1|ode2> — 切换模式\n"
+            "  normal: 普通模式，直接写函数\n"
+            "  ode1: 一阶微分模式\n"
+            "  ode2: 二阶微分模式（需先设角度）\n"
+            "/gw angle <角度> — 设置发射角度（ode2 模式）\n"
+            "\n函数示例：\n"
+            "  普通: sin(x)*5 或 y=sin(x)*5\n"
+            "  一阶: y'=-y/3\n"
+            "  二阶: y''=-y+y'（先 /gw angle 45）\n"
+            "\n运算符: + - * / ^\n"
+            "函数: sqrt log ln abs sin cos tan exp\n"
         )
         yield event.plain_result(help_text)
 

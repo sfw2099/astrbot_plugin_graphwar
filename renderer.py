@@ -7,7 +7,14 @@ from .constants import (
 )
 
 
+_FONT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "STZHONGS.TTF")
+
 def _get_font(size=16):
+    if os.path.exists(_FONT_PATH):
+        try:
+            return ImageFont.truetype(_FONT_PATH, size)
+        except Exception:
+            pass
     candidates = [
         "C:/Windows/Fonts/msyh.ttc",
         "C:/Windows/Fonts/simhei.ttf",

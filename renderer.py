@@ -31,7 +31,7 @@ def _get_font(size=16):
 
 
 def render_game(terrain, players, current_player_id, trajectory=None,
-                mode="normal", turn_info="", error_msg=None):
+                mode="normal", turn_info="", error_msg=None, func_str=""):
     """Render the game state to a PNG image.
 
     Args:
@@ -42,6 +42,7 @@ def render_game(terrain, players, current_player_id, trajectory=None,
         mode: game mode string
         turn_info: info text for top bar
         error_msg: error message to display
+        func_str: last fired function string to display
 
     Returns:
         PIL Image object
@@ -120,6 +121,9 @@ def render_game(terrain, players, current_player_id, trajectory=None,
 
     title = f"函数战争 | {MODE_NAMES.get(mode, mode)} | {turn_info}"
     draw.text((margin, 8), title, fill=(220, 220, 230), font=font_med)
+
+    if func_str:
+        draw.text((margin, 27), f"f(x) = {func_str}", fill=(180, 220, 255), font=font_small)
 
     if error_msg:
         draw.text((margin, img_h - 25), error_msg, fill=(255, 100, 100), font=font_small)

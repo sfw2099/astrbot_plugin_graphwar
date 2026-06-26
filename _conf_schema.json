@@ -40,8 +40,7 @@
         "options": [
             "normal",
             "ode1",
-            "ode2",
-            "bot"
+            "ode2"
         ],
         "default": "normal"
     },

@@ -35,6 +35,7 @@ class Game:
         self.last_trajectory = None
         self.last_fire_result = None
         self.last_fire_player = None
+        self.last_func_str = None
         self.running = False
         self.started_by = None
         self._color_idx = 0
@@ -269,6 +270,7 @@ class Game:
             "shooter_kills": p["kills"],
         }
         self.last_fire_result = result
+        self.last_func_str = func_str
         return result, None
 
     def get_render_data(self):
@@ -297,6 +299,7 @@ class Game:
             "trajectory": self.last_trajectory,
             "mode": self.mode,
             "turn_info": turn_info,
+            "func_str": self.last_func_str or "",
         }
 
     def alive_count(self):

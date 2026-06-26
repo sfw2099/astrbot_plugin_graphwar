@@ -53,7 +53,8 @@ class GraphWarPlugin(Star):
     def _render_to_file(self, game):
         data = game.get_render_data()
         img = render_game(data["terrain"], data["players"], data["current_player_id"],
-                          data["trajectory"], data["mode"], data["turn_info"])
+                          data["trajectory"], data["mode"], data["turn_info"],
+                          func_str=data.get("func_str", ""))
         path = str(self.data_dir / f"board_{game.group_id}.png")
         render_to_file(img, path)
         return path
@@ -138,6 +139,7 @@ class GraphWarPlugin(Star):
             "status": self._cmd_status, "s": self._cmd_status,
             "stats": self._cmd_stats, "help": self._show_help,
             "mode": self._cmd_mode, "angle": self._cmd_angle,
+            "botstart": self._cmd_botstart,
         }
         h = handlers.get(sub)
         if h:
@@ -162,6 +164,25 @@ class GraphWarPlugin(Star):
             yield r
         yield event.plain_result(
             f"游戏开始！模式:{MODE_NAMES.get(game.mode)} 生命:{game.max_lives}\n"
+            f"/gw join 加入 | /gw fire <函数> 发射"
+        )
+
+    async def _cmd_botstart(self, event, gid, rest):
+        game = self._get_game(gid)
+        if game and game.running:
+            yield event.plain_result("游戏进行中！请等待当前游戏结束")
+            return
+        game = self._get_or_create_game(gid)
+        game.mode = "bot"
+        uid = str(event.get_sender_id())
+        name = event.get_sender_name() or f"user({uid})"
+        game.start(uid, name)
+        game.enable_bots()
+        self._start_timeout_monitor(gid)
+        async for r in self._send_image(event, game):
+            yield r
+        yield event.plain_result(
+            f"人机模式开始！AI球数量:{game.bot_count} 生命:{game.max_lives}\n"
             f"/gw join 加入 | /gw fire <函数> 发射"
         )
 
@@ -249,8 +270,8 @@ class GraphWarPlugin(Star):
             yield event.plain_result("当前没有游戏进行")
             return
         mode = rest.strip().lower()
-        if mode not in ("normal", "ode1", "ode2", "bot"):
-            yield event.plain_result(f"当前模式: {game.mode} | 可选: normal, ode1, ode2, bot")
+        if mode not in ("normal", "ode1", "ode2"):
+            yield event.plain_result(f"当前模式: {game.mode} | 可选: normal, ode1, ode2")
             return
         game.set_mode(mode)
         yield event.plain_result(f"模式已切换: {MODE_NAMES.get(mode)}")
@@ -273,17 +294,17 @@ class GraphWarPlugin(Star):
         help_text = (
             "=== 函数战争 帮助 ===\n"
             "/gw start — 开始游戏（自动加入）\n"
+            "/gw botstart — 开始人机对战（AI球自动刷新）\n"
             "/gw stop — 结束游戏（仅发起者）\n"
             "/gw join — 加入游戏\n"
             "/gw quit — 退出游戏\n"
             "/gw fire <函数> — 发射炮弹（写函数表达式）\n"
             "/gw status / /gw s — 查看当前棋盘\n"
             "/gw stats — 击杀排行榜\n"
-            "/gw mode <normal|ode1|ode2|bot> — 切换模式\n"
+            "/gw mode <normal|ode1|ode2> — 切换模式\n"
             "  normal: 普通模式，直接写函数\n"
             "  ode1: 一阶微分模式\n"
             "  ode2: 二阶微分模式（需先设角度）\n"
-            "  bot: 人机对战，AI球自动刷新\n"
             "/gw angle <角度> — 设置发射角度（ode2 模式）\n"
             "\n函数示例：\n"
             "  普通: sin(x)*5 或 y=sin(x)*5\n"

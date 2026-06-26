@@ -81,14 +81,18 @@ def render_game(terrain, players, current_player_id, trajectory=None,
         draw.text((lx, ly), label, fill=(180, 180, 190), font=font_small)
 
     if trajectory and len(trajectory) > 1:
-        traj_color = (255, 100, 50)
+        traj_color = (255, 60, 60)
         for i in range(len(trajectory) - 1):
             x1, y1 = trajectory[i]
             x2, y2 = trajectory[i + 1]
             draw.line(
                 [(play_x + x1, play_y + y1), (play_x + x2, play_y + y2)],
-                fill=traj_color, width=2,
+                fill=traj_color, width=5,
             )
+
+    # Debug: show trajectory point count on image
+    traj_count = len(trajectory) if trajectory else 0
+    draw.text((margin, 52), f"traj:{traj_count}pts mode:{mode}", fill=(255, 80, 80), font=font_small)
 
     for p in players:
         if not p.get("alive", False) and not p.get("spectating", False):

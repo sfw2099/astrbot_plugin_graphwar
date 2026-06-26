@@ -97,11 +97,14 @@ def tokenize(expr):
     if expr.startswith("y="):
         expr = expr[2:]
     elif expr.startswith("y'="):
-        expr = expr[2:]
-    elif expr.startswith("y''="):
         expr = expr[3:]
+    elif expr.startswith("y''="):
+        expr = expr[4:]
 
     expr = expr.replace("exp(", "e^(")
+
+    if expr.startswith("-"):
+        expr = "0" + expr
 
     tokens = []
     pos = 0

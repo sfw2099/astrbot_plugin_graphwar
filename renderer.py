@@ -71,6 +71,11 @@ def render_game(terrain, players, current_player_id, trajectory=None,
 
     cx = play_x + PLANE_LENGTH // 2
     cy = play_y + PLANE_HEIGHT // 2
+
+    font_small = _get_font(14)
+    font_med = _get_font(18)
+    font_large = _get_font(22)
+
     if show_coords:
         # coordinate helper
         def _gx_to_px(gx): return PLANE_LENGTH * gx / PLANE_GAME_LENGTH + PLANE_LENGTH // 2
@@ -104,10 +109,6 @@ def render_game(terrain, players, current_player_id, trajectory=None,
                 label = str(gy)
                 bw = draw.textbbox((0, 0), label, font=font_small)
                 draw.text((cx - (bw[2] - bw[0]) - 6, py - (bw[3]-bw[1])//2), label, fill=(130, 130, 150), font=font_small)
-
-    font_small = _get_font(14)
-    font_med = _get_font(18)
-    font_large = _get_font(22)
 
     if trajectory and len(trajectory) > 1:
         traj_color = (255, 60, 60)

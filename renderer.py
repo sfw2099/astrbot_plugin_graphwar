@@ -87,8 +87,16 @@ def render_game(terrain, players, current_player_id, trajectory=None,
             x2, y2 = trajectory[i + 1]
             draw.line(
                 [(play_x + x1, play_y + y1), (play_x + x2, play_y + y2)],
-                fill=traj_color, width=5,
+                fill=traj_color, width=4,
             )
+
+    # Debug overlay
+    traj_count = len(trajectory) if trajectory else 0
+    draw.text((margin, 48), f"pts:{traj_count}", fill=(255, 80, 80), font=font_small)
+    if trajectory and len(trajectory) > 1:
+        px0, py0 = trajectory[len(trajectory)//2]
+        draw.ellipse([play_x+px0-8, play_y+py0-8, play_x+px0+8, play_y+py0+8],
+                     outline=(255, 255, 0), width=3)
 
     for p in players:
         if not p.get("alive", False) and not p.get("spectating", False):

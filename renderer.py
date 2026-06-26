@@ -1,7 +1,7 @@
 import os
 import io
 from PIL import Image, ImageDraw, ImageFont
-from constants import (
+from .constants import (
     PLANE_LENGTH, PLANE_HEIGHT, SOLDIER_RADIUS,
     EXPLOSION_RADIUS, PLAYER_COLORS, MODE_NAMES,
 )

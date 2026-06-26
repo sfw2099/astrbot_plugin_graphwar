@@ -1,11 +1,11 @@
 import math
-from constants import (
+from .constants import (
     PLANE_LENGTH, PLANE_HEIGHT, PLANE_GAME_LENGTH,
     STEP_SIZE, FUNC_MAX_STEPS,
     FUNC_MAX_STEP_DISTANCE_SQUARED, FUNC_MIN_X_STEP_DISTANCE,
     SOLDIER_RADIUS, MODE_NORMAL, MODE_ODE1, MODE_ODE2,
 )
-from function_parser import CompiledFunction
+from .function_parser import CompiledFunction
 
 
 def plane_to_game(px, py):

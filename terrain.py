@@ -1,6 +1,6 @@
 import random
 import math
-from constants import (
+from .constants import (
     PLANE_LENGTH, PLANE_HEIGHT,
     NUM_CIRCLES_MEAN, NUM_CIRCLES_STD,
     CIRCLE_MEAN_RADIUS, CIRCLE_STD_RADIUS,

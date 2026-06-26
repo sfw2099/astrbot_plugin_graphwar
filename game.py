@@ -1,12 +1,12 @@
 import random
 import time
-from constants import (
+from .constants import (
     DEFAULT_MAX_LIVES, DEFAULT_TURN_TIME, DEFAULT_TERRAIN_REFRESH_TURNS,
     MODE_NORMAL, PLAYER_COLORS, SOLDIER_RADIUS,
 )
-from terrain import Terrain
-from function_parser import CompiledFunction
-from physics import simulate_trajectory, compute_start_angle
+from .terrain import Terrain
+from .function_parser import CompiledFunction
+from .physics import simulate_trajectory, compute_start_angle
 
 
 class Game:

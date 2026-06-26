@@ -66,6 +66,12 @@
             "step": 2
         }
     },
+    "show_coords": {
+        "type": "bool",
+        "title": "显示坐标提示",
+        "description": "开启后在图片上显示坐标轴数字和网格",
+        "default": false
+    },
     "image_width": {
         "type": "int",
         "title": "渲染图片宽度",

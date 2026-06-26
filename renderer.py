@@ -31,7 +31,8 @@ def _get_font(size=16):
 
 
 def render_game(terrain, players, current_player_id, trajectory=None,
-                mode="normal", turn_info="", error_msg=None, func_str=""):
+                mode="normal", turn_info="", error_msg=None, func_str="",
+                show_coords=False):
     """Render the game state to a PNG image.
 
     Args:
@@ -43,6 +44,7 @@ def render_game(terrain, players, current_player_id, trajectory=None,
         turn_info: info text for top bar
         error_msg: error message to display
         func_str: last fired function string to display
+        show_coords: whether to show coordinate axes and grid
 
     Returns:
         PIL Image object
@@ -69,16 +71,18 @@ def render_game(terrain, players, current_player_id, trajectory=None,
 
     cx = play_x + PLANE_LENGTH // 2
     cy = play_y + PLANE_HEIGHT // 2
-    draw.line([(cx, play_y), (cx, play_y + PLANE_HEIGHT)], fill=(200, 200, 210), width=1)
-    draw.line([(play_x, cy), (play_x + PLANE_LENGTH, cy)], fill=(200, 200, 210), width=1)
+    if show_coords:
+        draw.line([(cx, play_y), (cx, play_y + PLANE_HEIGHT)], fill=(200, 200, 210), width=1)
+        draw.line([(play_x, cy), (play_x + PLANE_LENGTH, cy)], fill=(200, 200, 210), width=1)
 
     font_small = _get_font(14)
     font_med = _get_font(18)
     font_large = _get_font(22)
 
-    for label, lx, ly in [("-25", play_x + 5, cy + 3), ("25", play_x + PLANE_LENGTH - 20, cy + 3),
-                          ("15", cx + 3, play_y + 3), ("-15", cx + 3, play_y + PLANE_HEIGHT - 18)]:
-        draw.text((lx, ly), label, fill=(180, 180, 190), font=font_small)
+    if show_coords:
+        for label, lx, ly in [("-25", play_x + 5, cy + 3), ("25", play_x + PLANE_LENGTH - 20, cy + 3),
+                              ("15", cx + 3, play_y + 3), ("-15", cx + 3, play_y + PLANE_HEIGHT - 18)]:
+            draw.text((lx, ly), label, fill=(180, 180, 190), font=font_small)
 
     if trajectory and len(trajectory) > 1:
         traj_color = (255, 60, 60)

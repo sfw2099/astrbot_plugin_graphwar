@@ -15,7 +15,8 @@ class Game:
                  turn_time=DEFAULT_TURN_TIME,
                  terrain_refresh_turns=DEFAULT_TERRAIN_REFRESH_TURNS,
                  mode=MODE_NORMAL, stats_manager=None,
-                 bot_count=DEFAULT_BOT_COUNT, explosion_radius=18):
+                 bot_count=DEFAULT_BOT_COUNT, explosion_radius=18,
+                 show_coords=False):
         self.group_id = group_id
         self.max_lives = max_lives
         self.turn_time = turn_time
@@ -24,6 +25,7 @@ class Game:
         self.stats = stats_manager
         self.bot_count = bot_count
         self.explosion_radius = explosion_radius
+        self.show_coords = show_coords
 
         self.terrain = Terrain()
         self.terrain.generate()
